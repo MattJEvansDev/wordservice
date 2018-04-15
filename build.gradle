@@ -1,0 +1,94 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:1.5.10.RELEASE"
+        classpath "gradle.plugin.com.palantir.gradle.docker:gradle-docker:0.18.0"
+    }
+}
+
+plugins {
+    id  'java'
+    id 'org.springframework.boot' version '1.5.10.RELEASE'
+    id 'com.palantir.docker' version '0.18.0'
+
+}
+
+jar {
+    baseName = project.name.toLowerCase()
+    version = project.version
+}
+
+processResources {
+    filesMatching("**/*.properties") {
+    expand(project.properties)
+    }
+}
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-actuator"
+    compile "org.springframework.boot:spring-boot-starter-web"
+    compile "org.springframework.data:spring-data-jpa:2.0.3.RELEASE"
+    compile "org.springframework.boot:spring-boot-starter-security"
+    compile "org.springframework.cloud:spring-cloud-starter-sleuth:1.2.4.RELEASE"
+    compile "org.springframework.cloud:spring-cloud-starter-zipkin:1.3.2.RELEASE"
+    compile "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:1.4.3.RELEASE"
+
+    testCompile("junit:junit")
+
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.0'
+}
+
+task initialiseParameters {
+
+    if(project.hasProperty('serviceVersion')){
+        println "Creating Jar with version "+ serviceVersion
+        jar.setProperty('version',serviceVersion)
+        project.version = serviceVersion
+    }else{
+        println "Using default version of " + ":" + jar['version']
+    }
+
+    build.dependsOn initialiseParameters
+
+}
+
+docker {
+
+    String buildName = jar.getProperties()['baseName'].toString().toLowerCase()
+    String buildVersion = jar.getProperties()['version']
+
+    System.out.println("Docker is using version " +buildVersion);
+
+    // Although this is specified within the Docker file, the gradle plugin states it as a mandatory field.
+    // Docker file will override this
+    String dockerNameAndVersion = buildName + "/" +buildVersion
+    name  dockerNameAndVersion
+
+    String executablesToPackage = "build/libs/"+buildName+"-"+buildVersion + ".jar"
+    files executablesToPackage
+
+
+    dockerfile file('DockerFile')
+    buildArgs([
+            BUILD_NAME: buildName,
+            BUILD_VERSION:buildVersion,
+            PORT:project.port
+    ])
+
+    tags buildVersion
+    noCache true
+
+}

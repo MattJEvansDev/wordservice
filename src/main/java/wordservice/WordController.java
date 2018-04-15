@@ -1,0 +1,42 @@
+package wordservice;
+
+
+import org.apache.tomcat.util.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+
+/**
+ * Created by Matt on 26/01/2018.
+ */
+@RestController
+@EnableDiscoveryClient
+@RequestMapping("/word")
+public class WordController {
+
+    public static final List<String> WORD_VALUES = Arrays.asList("Apple","Book","Chair","Donkey","Elephant","Foot");
+    private static final Logger LOG = LoggerFactory.getLogger(WordController.class);
+
+    @RequestMapping(method = RequestMethod.GET, value = "/random")
+    public ResponseEntity<String> fetchRandomWord() {
+        LOG.info("Getting random word");
+
+        Random random = new Random();
+        int randomIndex = random.ints(0, 6).findFirst().getAsInt();
+
+        return new ResponseEntity<String>(WORD_VALUES.get(randomIndex), HttpStatus.OK);
+    }
+
+}
