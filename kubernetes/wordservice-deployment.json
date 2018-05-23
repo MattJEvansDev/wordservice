@@ -1,0 +1,46 @@
+{
+   "apiVersion":"apps/v1",
+   "kind":"Deployment",
+   "metadata":{
+      "name":"wordservice",
+       "labels":{
+       "app":"wordservice"
+       }
+   },
+   "spec":{
+     "replicas": 2,
+     "minReadySeconds":15,
+     "selector": {
+         "matchLabels": {
+         "app":"wordservice",
+         "visualize":"true"
+          }
+      }
+     ,
+     "template": {
+         "metadata": {
+             "labels": {
+             "app":"wordservice",
+             "visualize":"true"
+             }
+           
+          },
+          "spec": {
+              "containers":[ {
+                   "image":"mjevans/wordservice",
+                   "imagePullPolicy": "Never",
+                   "name": "wordservice",
+                   "env": [ {
+                     	"name":"EUREKA_URL",
+                        "value":"http://eureka:admin@eureka-lb:8761/eureka"
+                   }],
+                   "ports":[ {
+                       "containerPort":8083
+                   }]
+                 
+               }]
+          }
+     }
+      
+   }
+}
